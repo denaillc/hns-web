@@ -187,6 +187,7 @@ export class UI {
           <button data-action="new" class="${hasSave ? '' : 'primary'}">Nouvelle partie</button>
           <button data-action="help">Commandes</button>
         </div>
+        ${matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches ? '<div class="records warn">Ce jeu se joue au clavier et à la souris.</div>' : ''}
         ${rec.bestFloor > 0 ? `<div class="records">Record : étage ${rec.bestFloor} · niveau ${rec.bestLevel} · ${rec.totalKills} monstres vaincus</div>` : ''}
         <div class="help-box hidden">${this.helpHtml()}</div>
       </div>`;
@@ -199,7 +200,7 @@ export class UI {
         <tr><td>${l('KeyW')}${l('KeyA')}${l('KeyS')}${l('KeyD')} / flèches</td><td>Se déplacer</td></tr>
         <tr><td><kbd>Clic gauche</kbd> (maintenu)</td><td>Taille — attaque au corps à corps</td></tr>
         <tr><td><kbd>Clic droit</kbd></td><td>Boule de feu</td></tr>
-        <tr><td>${l('Digit1')} ${l('Digit2')}</td><td>Tourbillon (niv. 2) · Nova de givre (niv. 4)</td></tr>
+        <tr><td>${l('Digit1')} ${l('Digit2')} ${l('Digit3')}</td><td>Tourbillon (niv. 2) · Nova de givre (niv. 4) · Météores (niv. 6)</td></tr>
         <tr><td>${l('Space')}</td><td>Roulade (invulnérable)</td></tr>
         <tr><td>${l('KeyF')}</td><td>Boire une potion</td></tr>
         <tr><td>${l('KeyI')} / ${l('Tab')}</td><td>Inventaire et personnage</td></tr>

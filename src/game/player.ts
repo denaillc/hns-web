@@ -6,7 +6,7 @@ import type { Enemy } from './enemies';
 import type { Input } from './input';
 import { animateRig, buildHumanoid, buildShadowBlob, setFlash, type Rig } from './models';
 
-export type SkillId = 'slash' | 'fireball' | 'whirl' | 'nova' | 'dash' | 'potion';
+export type SkillId = 'slash' | 'fireball' | 'whirl' | 'nova' | 'meteor' | 'dash' | 'potion';
 
 export interface SkillDef {
   id: SkillId;
@@ -30,6 +30,8 @@ export const SKILLS: SkillDef[] = [
     description: 'Tournoie en frappant 4 fois tout autour de vous.' },
   { id: 'nova', name: 'Nova de givre', key: 'Digit2', mana: 32, cooldown: 8, icon: '❄', unlock: 4,
     description: 'Onde glaciale : 140 % des dégâts et ralentit de 60 % pendant 3 s.' },
+  { id: 'meteor', name: 'Pluie de météores', key: 'Digit3', mana: 45, cooldown: 12, icon: '☄', unlock: 6,
+    description: 'Six météores s’abattent autour du point visé : 220 % des dégâts chacun en zone.' },
   { id: 'dash', name: 'Roulade', key: 'Space', mana: 0, cooldown: 2.5, icon: '💨', unlock: 1,
     description: 'Bond rapide dans la direction du mouvement. Invulnérable pendant le bond.' },
   { id: 'potion', name: 'Potion', key: 'KeyF', mana: 0, cooldown: 1, icon: '🧪', unlock: 1,
@@ -50,7 +52,7 @@ export class Player {
   dead = false;
   deadTime = 0;
   /** Cooldowns restants par compétence. */
-  readonly cd: Record<SkillId, number> = { slash: 0, fireball: 0, whirl: 0, nova: 0, dash: 0, potion: 0 };
+  readonly cd: Record<SkillId, number> = { slash: 0, fireball: 0, whirl: 0, nova: 0, meteor: 0, dash: 0, potion: 0 };
   private action: { id: SkillId; t: number; dur: number; hitAt: number[]; hitsDone: number; dir: THREE.Vector3 } | null = null;
   private dash: { t: number; dir: THREE.Vector3 } | null = null;
   private healOverTime = 0;
@@ -59,6 +61,9 @@ export class Player {
   private walkTime = 0;
   invulnerable = 0;
   readonly radiusForEnemies = PLAYER_RADIUS;
+  private readonly meteorTarget = new THREE.Vector3();
+  /** Dernier point visé (sol), pour les sorts ciblés. */
+  private readonly lastAim = new THREE.Vector3();
   readonly light: THREE.PointLight;
   private readonly slashArc: THREE.Mesh;
 
@@ -170,6 +175,7 @@ export class Player {
     );
     if (mv.lengthSq() > 0) mv.normalize();
 
+    this.lastAim.copy(aim);
     const toAim = new THREE.Vector3(aim.x - this.pos.x, 0, aim.z - this.pos.z);
     const aimDir = toAim.lengthSq() > 0.01 ? toAim.normalize() : new THREE.Vector3(Math.sin(this.facing), 0, Math.cos(this.facing));
 
@@ -193,7 +199,7 @@ export class Player {
     if (want('potion')) this.tryPotion(ctx);
 
     if (!this.action && !this.dash) {
-      for (const id of ['whirl', 'nova', 'fireball', 'slash'] as SkillId[]) {
+      for (const id of ['meteor', 'whirl', 'nova', 'fireball', 'slash'] as SkillId[]) {
         if (!want(id)) continue;
         if (this.tryStart(id, ctx, aimDir)) break;
       }
@@ -299,6 +305,10 @@ export class Player {
       case 'nova':
         this.action = { id, t: 0, dur: 0.4, hitAt: [0.15], hitsDone: 0, dir: dir.clone() };
         break;
+      case 'meteor':
+        this.action = { id, t: 0, dur: 0.5, hitAt: [0.25], hitsDone: 0, dir: dir.clone() };
+        this.meteorTarget.copy(this.lastAim);
+        break;
       default:
         return false;
     }
@@ -373,6 +383,32 @@ export class Player {
         ctx.particles.burst(origin.clone().setY(0.5), 0xe0f4ff, 40, 6, { gravity: 2, life: 0.8 });
         ctx.audio.play('nova');
         ctx.shake(0.25);
+        break;
+      }
+      case 'meteor': {
+        const center = this.meteorTarget.clone();
+        // Limite la portée à 12 m.
+        const off = center.clone().sub(origin).setY(0);
+        if (off.length() > 12) center.copy(origin).add(off.setLength(12));
+        for (let i = 0; i < 6; i++) {
+          const a = ctx.rng.range(0, Math.PI * 2);
+          const r = i === 0 ? 0 : ctx.rng.range(1.2, 3.6);
+          const at = center.clone().add(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)).setY(0);
+          if (!ctx.collision.isWalkable(at.x, at.z)) continue;
+          const roll = this.rollDamage(ctx, 2.2, true);
+          ctx.addTelegraph(at, 1.9, 0.45 + i * 0.12, () => {
+            ctx.particles.burst(at.clone().setY(0.4), 0xff6a1a, 34, 8, { size: 0.55, life: 0.55, gravity: 6 });
+            ctx.particles.ring(at, 0.4, 0xffb060, 26, { speed: 8, size: 0.45, life: 0.4 });
+            ctx.audio.play('explode');
+            ctx.shake(0.22);
+            for (const e of ctx.enemies) {
+              if (e.dead) continue;
+              if (Math.hypot(e.pos.x - at.x, e.pos.z - at.z) - e.radius < 1.9) ctx.damageEnemy(e, roll.amount, { crit: roll.crit, knockback: 3, from: at, spell: true, color: 0xff7a1a });
+            }
+            ctx.hitBreakables(at, 1.9);
+          }, 0xff8a2a);
+        }
+        ctx.audio.play('fireball');
         break;
       }
       default:

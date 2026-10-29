@@ -1,6 +1,6 @@
 {
   "name": "hns-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Hack'n'slash 3D jouable dans le navigateur",
   "scripts": {
     "dev": "vite",

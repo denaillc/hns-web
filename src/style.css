@@ -128,6 +128,7 @@ kbd {
 .title-card h1 { margin: 14px 0 34px; font: 900 64px/1.02 var(--serif); color: #e8dcc0; text-shadow: 0 4px 18px #000, 0 0 40px rgba(180,90,20,.35); }
 .title-card h1 span { color: var(--gold); font-size: 76px; }
 .records { margin-top: 22px; color: var(--ink-dim); font-size: 14px; }
+.records.warn { color: #e0a050; }
 
 .menu { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .menu.row { flex-direction: row; justify-content: center; margin-top: 18px; }

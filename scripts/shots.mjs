@@ -37,6 +37,21 @@ try {
   });
   await page.waitForTimeout(600);
   await page.screenshot({ path: `${OUT}/close-bestiary.png` });
+  // Sorts de haut niveau sur les monstres.
+  await page.evaluate(() => {
+    const g = window.__game;
+    g.character.level = 6;
+    g.player.refreshStats();
+    g.player.fullHeal();
+  });
+  await page.mouse.move(550, 200);
+  await page.keyboard.press('Digit3');
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${OUT}/close-meteor.png` });
+  await page.keyboard.press('Digit2');
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${OUT}/close-nova.png` });
+  console.log(await page.evaluate(() => window.__game.debugState()));
 } finally {
   await browser.close();
 }

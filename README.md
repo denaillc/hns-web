@@ -5,7 +5,9 @@ Donjons générés à chaque étage, combat nerveux, loot à raretés, boss tous
 
 Tout est procédural : modèles low-poly, textures (canvas), sons (Web Audio). Aucun asset externe.
 
-![Combat](docs/screenshot-combat.png)
+| Combat | Sorts | Boss |
+| --- | --- | --- |
+| ![Combat](docs/screenshot-combat.png) | ![Sorts](docs/screenshot-sorts.png) | ![Boss](docs/screenshot-boss.png) |
 
 ## Lancer le jeu
 
@@ -33,6 +35,7 @@ une fois Pages activé (Settings → Pages → Source : **GitHub Actions**).
 | Clic droit | **Boule de feu** — explose en zone (mana) |
 | 1 | **Tourbillon** — 4 coups tout autour (niveau 2) |
 | 2 | **Nova de givre** — dégâts + ralentissement (niveau 4) |
+| 3 | **Pluie de météores** — 6 impacts autour du curseur (niveau 6) |
 | Espace | **Roulade** — bond invulnérable |
 | F | Potion de vie |
 | I / Tab / C | Inventaire et fiche de personnage |
@@ -48,7 +51,8 @@ une fois Pages activé (Settings → Pages → Source : **GitHub Actions**).
   invocations à 66 % et 33 % de vie. Le portail ne s'ouvre qu'à sa mort.
 - **Butin** : 6 emplacements, 4 raretés (commun, magique, rare, légendaire), 14 types d'affixes,
   comparaison avec l'objet porté, recyclage en or.
-- **Progression** : XP / niveaux, compétences débloquées, difficulté croissante par étage.
+- **Progression** : XP / niveaux, 6 compétences dont 3 à débloquer (niv. 2, 4, 6), difficulté croissante par étage.
+- **Destructibles** : jarres et tonneaux qui cachent or, potions et parfois un objet.
 - **Halte entre les étages** : marchand de potions, recyclage en masse.
 - **Sauvegarde** automatique (localStorage) au début de chaque étage ; « Réessayer l'étage » après une mort.
 - **Réglages** : volume, nombres de dégâts, mode performance (sans ombres).
