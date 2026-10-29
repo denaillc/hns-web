@@ -94,6 +94,9 @@ kbd {
 .f-mana { color: #7fa8ff; font-size: 15px; }
 .f-info { color: #fff; font-size: 15px; font-weight: 500; }
 
+.ground-label { position: absolute; left: 0; top: 0; padding: 1px 7px; font: 600 13px var(--sans); white-space: nowrap; background: rgba(0,0,0,.72); border: 1px solid rgba(255,255,255,.08); text-shadow: 0 1px 1px #000; }
+.hint-row { position: absolute; left: 50%; bottom: 140px; transform: translateX(-50%); padding: 6px 14px; background: rgba(10,8,6,.72); border: 1px solid #3a2e1f; font-size: 14px; color: var(--ink-dim); white-space: nowrap; }
+
 /* ---------- Toasts et bannière ---------- */
 .toasts { position: absolute; left: 18px; bottom: 150px; display: flex; flex-direction: column-reverse; gap: 4px; }
 .toast { font-size: 15px; padding: 4px 10px; background: rgba(10,8,6,.7); border-left: 3px solid var(--gold-dim); transition: opacity .6s, transform .6s; text-shadow: 0 1px 2px #000; }

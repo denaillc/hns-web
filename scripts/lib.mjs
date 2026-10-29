@@ -16,7 +16,7 @@ async function chromiumPath() {
 }
 
 /** Démarre `vite preview` + Chromium headless (WebGL via SwiftShader) et ouvre le jeu. */
-export async function launch({ width = 1280, height = 760 } = {}) {
+export async function launch({ width = 1024, height = 640 } = {}) {
   mkdirSync(OUT, { recursive: true });
   const port = Number(process.env.E2E_PORT ?? 41000 + Math.floor(Math.random() * 8000));
   const server = spawn('npx', ['vite', 'preview', '--port', String(port), '--strictPort', '--host', '127.0.0.1'], { stdio: 'pipe' });
@@ -35,6 +35,11 @@ export async function launch({ width = 1280, height = 760 } = {}) {
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
   });
   const page = await browser.newPage({ viewport: { width, height } });
+  // Le rendu logiciel est lent : qualité basse par défaut (E2E_QUALITY=high pour tester les ombres).
+  const quality = process.env.E2E_QUALITY ?? 'low';
+  await page.addInitScript((q) => {
+    localStorage.setItem('hns-web:settings:v1', JSON.stringify({ volume: 0, muted: true, showDamageNumbers: true, quality: q }));
+  }, quality);
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.stack ?? e.message}`));
   page.on('console', (m) => {

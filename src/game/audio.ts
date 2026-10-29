@@ -21,7 +21,8 @@ export type Sfx =
   | 'slam'
   | 'portal'
   | 'error'
-  | 'legendary';
+  | 'legendary'
+  | 'break';
 
 export class Audio {
   private ctx: AudioContext | null = null;
@@ -162,6 +163,10 @@ export class Audio {
       case 'portal':
         this.tone('sine', 200, 800, 0.8, 0.2);
         this.tone('sine', 300, 1200, 0.8, 0.12, 0.1);
+        break;
+      case 'break':
+        this.hiss(0.22, 0.45, 'bandpass', 1800, 700, 0, 2);
+        this.tone('triangle', 520 * v, 260, 0.12, 0.12);
         break;
       case 'error':
         this.tone('square', 140, 120, 0.12, 0.12);

@@ -61,6 +61,8 @@ export class UI {
   private floaters: Floater[] = [];
   private floaterPool: HTMLDivElement[] = [];
   private bars = new Map<number, HTMLDivElement>();
+  private labels = new Map<string, HTMLDivElement>();
+  private hintTimer = 0;
   private bannerTimer = 0;
   private vignetteLevel = 0;
   private showFps = false;
@@ -477,6 +479,8 @@ export class UI {
   onFloorLoaded(): void {
     for (const b of this.bars.values()) b.remove();
     this.bars.clear();
+    for (const l of this.labels.values()) l.remove();
+    this.labels.clear();
     for (const f of this.floaters) f.el.remove();
     this.floaters = [];
   }
@@ -684,10 +688,60 @@ export class UI {
     }
 
     this.updateEnemyBars();
+    this.updateItemLabels();
+    this.updateHint(dt);
     this.mmTimer -= dt;
     if (this.mmTimer <= 0) {
       this.mmTimer = 0.1;
       this.drawMinimap();
+    }
+  }
+
+  /** Noms des objets au sol (couleur de rareté), façon Diablo. */
+  private updateItemLabels(): void {
+    const g = this.game;
+    const seen = new Set<string>();
+    for (const k of g.pickups) {
+      if (k.kind !== 'item' || !k.item || k.taken) continue;
+      g.project(k.pos.clone().setY(1.1), this.proj);
+      if (!this.proj.visible) continue;
+      seen.add(k.item.id);
+      let el = this.labels.get(k.item.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = `ground-label r-${k.item.rarity}`;
+        el.textContent = k.item.name;
+        this.barLayer.appendChild(el);
+        this.labels.set(k.item.id, el);
+      }
+      el.style.transform = `translate(${this.proj.x}px, ${this.proj.y}px) translate(-50%, -100%)`;
+    }
+    for (const [id, el] of this.labels) {
+      if (!seen.has(id)) {
+        el.remove();
+        this.labels.delete(id);
+      }
+    }
+  }
+
+  /** Aide contextuelle pour les premières minutes. */
+  private updateHint(dt: number): void {
+    const g = this.game;
+    const el = this.els['hint-row'];
+    this.hintTimer += dt;
+    let hint = '';
+    const L = (c: string) => `<kbd>${esc(g.input.label(c))}</kbd>`;
+    if (g.character.floor === 1 && g.character.level === 1 && this.hintTimer < 40) {
+      hint = `${L('KeyW')}${L('KeyA')}${L('KeyS')}${L('KeyD')} se déplacer · <kbd>Clic gauche</kbd> frapper · <kbd>Clic droit</kbd> boule de feu · ${L('Space')} roulade · ${L('KeyF')} potion`;
+    } else if (g.character.inventory.length >= 20 && g.character.inventory.length < 24) {
+      hint = `Sac presque plein — ${L('KeyI')} pour équiper ou recycler (clic droit)`;
+    } else if (g.player.hp / g.player.stats.maxHp < 0.3 && g.character.potions > 0) {
+      hint = `Vie basse ! ${L('KeyF')} pour boire une potion`;
+    }
+    if (el.dataset.hint !== hint) {
+      el.dataset.hint = hint;
+      el.innerHTML = hint;
+      el.classList.toggle('hidden', !hint);
     }
   }
 

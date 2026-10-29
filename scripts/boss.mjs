@@ -65,3 +65,4 @@ if (errors.length) {
   process.exit(1);
 }
 console.log('✅ Scénario boss OK');
+process.exit(0);

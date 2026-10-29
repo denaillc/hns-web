@@ -40,5 +40,7 @@ export interface GameCtx {
   addTelegraph(pos: THREE.Vector3, radius: number, duration: number, onFire: () => void, color?: number): void;
   spawnEnemy(kind: EnemyKind, pos: THREE.Vector3, elite?: boolean): Enemy | null;
   shake(amount: number): void;
+  /** Casse les jarres/tonneaux touchés (cône si `dir` est fourni). */
+  hitBreakables(origin: THREE.Vector3, range: number, dir?: THREE.Vector3, cosHalf?: number): void;
   floatText(pos: THREE.Vector3, text: string, kind: FloatKind): void;
 }

@@ -327,6 +327,7 @@ export class Player {
         arc.rotation.y = Math.atan2(-dir.z, dir.x);
         (arc.material as THREE.MeshBasicMaterial).opacity = 0.55;
         if (hits > 0) ctx.shake(0.12 + Math.min(hits, 4) * 0.04);
+        ctx.hitBreakables(origin, range, dir, cosHalf);
         break;
       }
       case 'fireball': {
@@ -355,6 +356,7 @@ export class Player {
           ctx.damageEnemy(e, r.amount, { crit: r.crit, knockback: 2.5, from: origin });
         }
         ctx.particles.ring(origin, 1.2, 0xffe2b0, 28, { speed: 9, size: 0.35, life: 0.3, y: 0.9 });
+        ctx.hitBreakables(origin, range);
         ctx.shake(0.1);
         break;
       }
@@ -367,6 +369,7 @@ export class Player {
           ctx.damageEnemy(e, r.amount, { crit: r.crit, knockback: 3, from: origin, slow: 0.6, slowFor: 3, spell: true, color: 0x88ccff });
         }
         ctx.particles.ring(origin, 0.6, 0x9fdcff, 90, { speed: 14, size: 0.55, life: 0.55 });
+        ctx.hitBreakables(origin, range);
         ctx.particles.burst(origin.clone().setY(0.5), 0xe0f4ff, 40, 6, { gravity: 2, life: 0.8 });
         ctx.audio.play('nova');
         ctx.shake(0.25);

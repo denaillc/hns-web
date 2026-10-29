@@ -18,8 +18,8 @@ try {
   await page.screenshot({ path: `${OUT}/02-start.png` });
 
   // Se balader et frapper.
-  const cx = 640;
-  const cy = 380;
+  const cx = 512;
+  const cy = 320;
   await page.mouse.move(cx + 200, cy);
   const dirs = ['KeyD', 'KeyS', 'KeyA', 'KeyW'];
   for (let i = 0; i < 8; i++) {
@@ -110,3 +110,4 @@ if (errors.length) {
   process.exit(1);
 }
 console.log('\n✅ Aucun erreur JS pendant la session.');
+process.exit(0);

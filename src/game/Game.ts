@@ -13,6 +13,7 @@ import { randomSeed, Rng } from '../core/rng';
 import { clearSave, loadSave, loadSettings, saveSettings, updateRecords, writeSave, type Settings } from '../core/save';
 import { mitigate } from '../core/stats';
 import { Audio } from './audio';
+import { makeBreakable, type Breakable } from './breakables';
 import type { FloatKind, GameCtx, HitOptions } from './context';
 import { Enemy, type EnemyKind } from './enemies';
 import { Input } from './input';
@@ -44,6 +45,7 @@ export class Game implements GameCtx {
   player!: Player;
   enemies: Enemy[] = [];
   pickups: Pickup[] = [];
+  breakables: Breakable[] = [];
   dungeon!: Dungeon;
   world: WorldView | null = null;
   collision!: Collision;
@@ -64,7 +66,7 @@ export class Game implements GameCtx {
   private flowTimer = 0;
   private exploreTimer = 0;
   private shakeAmount = 0;
-  private zoom = 1;
+  private zoom = 0.85;
   private hitStop = 0;
   private aim = new THREE.Vector3();
   private readonly raycaster = new THREE.Raycaster();
@@ -214,6 +216,8 @@ export class Game implements GameCtx {
     }
     for (const e of this.enemies) this.scene.remove(e.root);
     for (const p of this.pickups) this.scene.remove(p.mesh);
+    for (const b of this.breakables) this.scene.remove(b.mesh);
+    this.breakables = [];
     if (this.player) {
       this.scene.remove(this.player.root);
     }
@@ -241,6 +245,7 @@ export class Game implements GameCtx {
     this.camTarget.copy(this.player.pos);
 
     this.populate();
+    this.placeBreakables();
     this.portalActive = !this.bossFloor;
     this.world.setPortalActive(this.portalActive);
     this.floorKills = 0;
@@ -292,6 +297,66 @@ export class Game implements GameCtx {
         }
       }
     });
+  }
+
+  /** Jarres et tonneaux le long des murs des salles. */
+  private placeBreakables(): void {
+    const d = this.dungeon;
+    const rng = this.rng;
+    d.rooms.forEach((r, i) => {
+      if (this.bossFloor && i === d.exitRoom) return;
+      const n = rng.int(1, 4);
+      for (let k = 0; k < n; k++) {
+        const side = rng.int(0, 3);
+        const tx = side === 0 ? r.x : side === 1 ? r.x + r.w - 1 : rng.int(r.x + 1, r.x + r.w - 2);
+        const ty = side === 2 ? r.y : side === 3 ? r.y + r.h - 1 : rng.int(r.y + 1, r.y + r.h - 2);
+        if (!this.collision.isFloorTile(tx, ty)) continue;
+        const c = tileCenter(tx, ty);
+        // Pousse vers le mur le plus proche pour dégager le centre.
+        if (side === 0) c.x -= 0.5;
+        if (side === 1) c.x += 0.5;
+        if (side === 2) c.z -= 0.5;
+        if (side === 3) c.z += 0.5;
+        const b = makeBreakable(rng.chance(0.55) ? 'urn' : 'barrel', c);
+        this.scene.add(b.mesh);
+        this.breakables.push(b);
+        // Petites grappes.
+        if (rng.chance(0.4)) {
+          const c2 = c.clone().add(new THREE.Vector3(side < 2 ? 0 : 0.8, 0, side < 2 ? 0.8 : 0));
+          if (this.collision.isWalkable(c2.x, c2.z)) {
+            const b2 = makeBreakable('urn', c2);
+            this.scene.add(b2.mesh);
+            this.breakables.push(b2);
+          }
+        }
+      }
+    });
+  }
+
+  hitBreakables(origin: THREE.Vector3, range: number, dir?: THREE.Vector3, cosHalf = -1): void {
+    for (const b of this.breakables) {
+      if (b.broken) continue;
+      const to = new THREE.Vector3(b.pos.x - origin.x, 0, b.pos.z - origin.z);
+      const d = to.length();
+      if (d - 0.35 > range) continue;
+      if (dir && d > 0.6 && to.normalize().dot(dir) < cosHalf) continue;
+      this.breakObject(b);
+    }
+    this.breakables = this.breakables.filter((b) => !b.broken);
+  }
+
+  private breakObject(b: Breakable): void {
+    b.broken = true;
+    this.scene.remove(b.mesh);
+    const at = b.pos.clone().setY(0.5);
+    this.particles.burst(at, b.kind === 'urn' ? 0xa86a42 : 0x6a4a2a, 22, 4, { size: 0.28, life: 0.7, gravity: 12 });
+    this.particles.burst(at, 0x9a8a70, 10, 2, { size: 0.5, life: 0.6, gravity: 1 });
+    this.audio.play('break');
+    const rng = this.rng;
+    const floor = this.character.floor;
+    if (rng.chance(0.5)) this.spawnPickup('gold', b.pos, Math.round(rng.range(2, 6) * (1 + floor * 0.3)));
+    if (rng.chance(0.07)) this.spawnPickup('potion', b.pos, 1);
+    if (rng.chance(0.05)) this.spawnPickup('item', b.pos, 1, generateItem(rng, floor * 2 + Math.floor(this.character.level / 2)));
   }
 
   // ---------------------------------------------------------------------------
@@ -553,7 +618,7 @@ export class Game implements GameCtx {
 
   private frame = (now: number): void => {
     requestAnimationFrame(this.frame);
-    let dt = Math.min(0.05, (now - this.last) / 1000);
+    let dt = Math.max(0, Math.min(0.05, (now - this.last) / 1000));
     this.last = now;
     this.fpsFrames++;
     this.fpsTime += dt;

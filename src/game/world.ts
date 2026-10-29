@@ -123,8 +123,11 @@ function makeWallMaterial(): THREE.MeshStandardMaterial {
           float inFront = step(0.6, d.y);
           float r = length(vec2(d.x, d.y * 0.6));
           float cut = inFront * (1.0 - smoothstep(uCutRadius * 0.7, uCutRadius, r)) * step(0.5, vWorldPos.y);
-          float dither = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
-          if (cut > 0.0 && dither < cut * 0.85) discard;
+          // Tramage ordonné (Bayer 4x4) : plus propre qu'un bruit aléatoire.
+          const float B[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+          ivec2 b = ivec2(mod(gl_FragCoord.xy, 4.0));
+          float bayer = (B[b.y * 4 + b.x] + 0.5) / 16.0;
+          if (cut > 0.0 && bayer < cut * 0.92) discard;
         }`,
       )
       // Assombrit le bas des murs (occlusion ambiante cheap).

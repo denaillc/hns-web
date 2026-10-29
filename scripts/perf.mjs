@@ -23,3 +23,4 @@ try {
   await browser.close();
 }
 if (errors.length) console.error(errors);
+process.exit(0);

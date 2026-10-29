@@ -147,6 +147,7 @@ export class Projectiles {
       ctx.particles.burst(at, 0xffe08a, 20, 4, { size: 0.7, life: 0.3, gravity: 0 });
       ctx.audio.play('explode');
       ctx.shake(0.18);
+      if (p.owner === 'player') ctx.hitBreakables(at, p.aoe);
       for (const e of ctx.enemies) {
         if (e.dead) continue;
         if (e.pos.distanceTo(at.clone().setY(0)) - e.radius < p.aoe) {
