@@ -22,6 +22,8 @@ export interface Settings {
   volume: number;
   muted: boolean;
   showDamageNumbers: boolean;
+  /** « high » : ombres + 5 torches dynamiques ; « low » : sans ombres, résolution 1x. */
+  quality: 'high' | 'low';
 }
 
 function storage(): Storage | null {
@@ -82,7 +84,7 @@ export function updateRecords(c: Character, extraKills: number): Records {
 }
 
 export function loadSettings(): Settings {
-  return { volume: 0.6, muted: false, showDamageNumbers: true, ...(read<Settings>(SETTINGS_KEY) ?? {}) };
+  return { volume: 0.6, muted: false, showDamageNumbers: true, quality: 'high', ...(read<Settings>(SETTINGS_KEY) ?? {}) };
 }
 
 export function saveSettings(s: Settings): void {

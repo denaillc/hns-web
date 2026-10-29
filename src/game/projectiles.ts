@@ -43,7 +43,7 @@ export class Projectiles {
   private readonly lights: THREE.PointLight[] = [];
 
   constructor(private readonly scene: THREE.Scene) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const l = new THREE.PointLight(0xff8a3a, 0, 8, 2);
       scene.add(l);
       this.lights.push(l);

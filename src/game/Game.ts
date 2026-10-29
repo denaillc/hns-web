@@ -78,10 +78,9 @@ export class Game implements GameCtx {
   private bagFullWarnAt = -10;
 
   constructor(canvas: HTMLCanvasElement, uiRoot: HTMLElement) {
+    this.settings = loadSettings();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -90,9 +89,9 @@ export class Game implements GameCtx {
     this.scene.background = new THREE.Color(0x070605);
     this.scene.fog = new THREE.FogExp2(0x070605, 0.022);
 
-    const hemi = new THREE.HemisphereLight(0x8a9ab8, 0x2a1e14, 0.55);
+    const hemi = new THREE.HemisphereLight(0x8a9ab8, 0x2a1e14, 0.32);
     this.scene.add(hemi);
-    this.sun = new THREE.DirectionalLight(0x9fb2d8, 0.9);
+    this.sun = new THREE.DirectionalLight(0x9fb2d8, 0.55);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     const sc = this.sun.shadow.camera;
@@ -103,7 +102,7 @@ export class Game implements GameCtx {
     this.sun.shadow.bias = -0.0008;
     this.sun.shadow.normalBias = 0.04;
     this.scene.add(this.sun, this.sun.target);
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
       const l = new THREE.PointLight(0xff9a40, 0, 11, 1.8);
       this.scene.add(l);
       this.torchLights.push(l);
@@ -113,7 +112,7 @@ export class Game implements GameCtx {
     this.telegraphs = new Telegraphs(this.scene);
 
     this.input = new Input(canvas);
-    this.settings = loadSettings();
+    this.applyQuality();
     this.audio.volume = this.settings.volume;
     this.audio.muted = this.settings.muted;
     this.ui = new UI(uiRoot, this);
@@ -183,6 +182,21 @@ export class Game implements GameCtx {
     this.state = s;
     this.input.reset();
     this.ui.onStateChange(s);
+  }
+
+  /** Applique le réglage de qualité graphique (ombres, résolution, lumières). */
+  applyQuality(): void {
+    const high = this.settings.quality !== 'low';
+    this.renderer.setPixelRatio(high ? Math.min(window.devicePixelRatio, 1.75) : 1);
+    this.renderer.shadowMap.enabled = high;
+    this.sun.castShadow = high;
+    this.torchLights.forEach((l, i) => (l.visible = high || i < 2));
+    // Les matériaux doivent être recompilés quand le nombre de lumières / les ombres changent.
+    this.scene.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      if (m) (Array.isArray(m) ? m : [m]).forEach((x) => (x.needsUpdate = true));
+    });
+    this.resize();
   }
 
   saveSettings(): void {
@@ -531,9 +545,10 @@ export class Game implements GameCtx {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h, false);
+    const ratio = this.renderer.getPixelRatio();
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.particles.setViewportHeight(h * Math.min(window.devicePixelRatio, 2));
+    this.particles.setViewportHeight(h * ratio);
   }
 
   private frame = (now: number): void => {
@@ -733,7 +748,7 @@ export class Game implements GameCtx {
     if (this.input.wheel !== 0 && this.state === 'playing') this.zoom = THREE.MathUtils.clamp(this.zoom + this.input.wheel * 0.08, 0.65, 1.35);
     const lerp = 1 - Math.exp(-dt * (this.state === 'menu' ? 2 : 8));
     this.camTarget.lerp(p.pos, lerp);
-    const offset = new THREE.Vector3(0, 17, 11.5).multiplyScalar(this.zoom);
+    const offset = new THREE.Vector3(0, 15, 10.5).multiplyScalar(this.zoom);
     this.camera.position.copy(this.camTarget).add(offset);
     if (this.shakeAmount > 0) {
       const s = this.shakeAmount * this.shakeAmount * 0.6;

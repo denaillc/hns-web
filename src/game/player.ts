@@ -75,7 +75,7 @@ export class Player {
     });
     this.root = this.rig.root;
     this.root.add(buildShadowBlob(0.55));
-    this.light = new THREE.PointLight(0xffc68a, 22, 14, 1.6);
+    this.light = new THREE.PointLight(0xffc68a, 30, 18, 1.5);
     this.light.position.set(0, 3.2, 0.6);
     this.root.add(this.light);
 
@@ -250,7 +250,7 @@ export class Player {
     if (cape) cape.rotation.x = 0.15 + this.moving * 0.35 + Math.sin(ctx.time * 6) * 0.04;
     this.flash = Math.max(0, this.flash - dt * 6);
     setFlash(this.rig, this.flash * 1.5, 0xff2222);
-    this.light.intensity = 20 + Math.sin(ctx.time * 11) * 1.5 + Math.sin(ctx.time * 17) * 1;
+    this.light.intensity = 28 + Math.sin(ctx.time * 11) * 1.5 + Math.sin(ctx.time * 17) * 1;
   }
 
   private tryPotion(ctx: GameCtx) {

@@ -26,12 +26,12 @@ export interface EnemyDef {
 }
 
 export const ENEMY_DEFS: Record<EnemyKind, EnemyDef> = {
-  skeleton: { kind: 'skeleton', name: 'Squelette', hp: 34, damage: 9, speed: 3.6, radius: 0.45, xp: 12, attackRange: 1.5, windup: 0.4, recover: 0.6, mass: 1 },
+  skeleton: { kind: 'skeleton', name: 'Squelette', hp: 34, damage: 8, speed: 3.6, radius: 0.45, xp: 12, attackRange: 1.5, windup: 0.45, recover: 0.75, mass: 1 },
   archer: { kind: 'archer', name: 'Archer squelette', hp: 24, damage: 8, speed: 3.2, radius: 0.42, xp: 14, attackRange: 12, windup: 0.6, recover: 1.1, ranged: true, keepAway: 7, mass: 0.9 },
   brute: { kind: 'brute', name: 'Goule massive', hp: 130, damage: 24, speed: 2.6, radius: 0.85, xp: 40, attackRange: 2.4, windup: 0.85, recover: 0.9, mass: 3 },
   bat: { kind: 'bat', name: 'Chauve-souris des cryptes', hp: 13, damage: 5, speed: 6.4, radius: 0.35, xp: 6, attackRange: 1.2, windup: 0.18, recover: 0.7, mass: 0.4 },
   necro: { kind: 'necro', name: 'Nécromancien', hp: 46, damage: 11, speed: 2.8, radius: 0.45, xp: 30, attackRange: 11, windup: 0.8, recover: 1.4, ranged: true, keepAway: 8, mass: 1 },
-  boss: { kind: 'boss', name: 'Morvhal, le Roi-Liche', hp: 1100, damage: 30, speed: 3.0, radius: 1.3, xp: 450, attackRange: 3.4, windup: 0.7, recover: 0.8, mass: 50 },
+  boss: { kind: 'boss', name: 'Morvhal, le Roi-Liche', hp: 650, damage: 30, speed: 3.0, radius: 1.3, xp: 450, attackRange: 3.4, windup: 0.7, recover: 0.8, mass: 50 },
 };
 
 type State = 'idle' | 'chase' | 'windup' | 'recover' | 'dead';

@@ -106,13 +106,13 @@ function makeWallMaterial(): THREE.MeshStandardMaterial {
     shader.uniforms.uPlayer = wallUniforms.uPlayer;
     shader.uniforms.uCutRadius = wallUniforms.uCutRadius;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWorldPos;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWorldPos;\nvarying float vTop;')
       .replace(
         '#include <worldpos_vertex>',
-        '#include <worldpos_vertex>\nvWorldPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;',
+        '#include <worldpos_vertex>\nvWorldPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;\nvTop = step(0.5, objectNormal.y);',
       );
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWorldPos;\nuniform vec3 uPlayer;\nuniform float uCutRadius;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWorldPos;\nvarying float vTop;\nuniform vec3 uPlayer;\nuniform float uCutRadius;')
       .replace(
         '#include <clipping_planes_fragment>',
         `#include <clipping_planes_fragment>
@@ -130,7 +130,7 @@ function makeWallMaterial(): THREE.MeshStandardMaterial {
       // Assombrit le bas des murs (occlusion ambiante cheap).
       .replace(
         '#include <map_fragment>',
-        '#include <map_fragment>\ndiffuseColor.rgb *= mix(0.45, 1.0, smoothstep(0.0, 1.6, vWorldPos.y));',
+        '#include <map_fragment>\ndiffuseColor.rgb *= mix(0.45, 1.0, smoothstep(0.0, 1.6, vWorldPos.y));\ndiffuseColor.rgb *= mix(1.0, 0.12, vTop);',
       );
   };
   return m;

@@ -4,51 +4,10 @@
 //   npm run build && npm run e2e
 //
 // Variables : CHROMIUM_PATH (binaire Chromium), E2E_PORT (défaut 4173).
-import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
-import { chromium } from 'playwright-core';
+import { launch, OUT } from './lib.mjs';
 
-const PORT = Number(process.env.E2E_PORT ?? 4173);
-const URL = `http://127.0.0.1:${PORT}/`;
-const OUT = 'screenshots';
-mkdirSync(OUT, { recursive: true });
-
-async function chromiumPath() {
-  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
-  try {
-    const mod = await import('@sparticuz/chromium');
-    return await mod.default.executablePath();
-  } catch {
-    return undefined; // Playwright utilisera son navigateur installé
-  }
-}
-
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { stdio: 'pipe' });
-await new Promise((resolve, reject) => {
-  const t = setTimeout(() => reject(new Error('vite preview ne démarre pas')), 20000);
-  server.stdout.on('data', (d) => {
-    if (String(d).includes('http')) {
-      clearTimeout(t);
-      resolve();
-    }
-  });
-});
-
-const errors = [];
-let browser;
+const { browser, page, server, errors } = await launch();
 try {
-  browser = await chromium.launch({
-    executablePath: await chromiumPath(),
-    headless: true,
-    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
-  });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 760 } });
-  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-  page.on('console', (m) => {
-    if (m.type() === 'error' && !/fonts\.g|ERR_TUNNEL|ERR_NAME|ERR_CONNECTION/.test(m.text())) errors.push(`console: ${m.text()}`);
-  });
-  await page.goto(URL, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => !!window.__game, null, { timeout: 15000 });
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${OUT}/01-title.png` });
 
@@ -142,7 +101,7 @@ try {
   console.log('death', (await state()).state);
   await page.screenshot({ path: `${OUT}/09-death.png` });
 } finally {
-  await browser?.close();
+  await browser.close();
   server.kill();
 }
 

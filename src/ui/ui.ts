@@ -160,6 +160,10 @@ export class UI {
       const t = e.target as HTMLInputElement;
       if (t.name === 'muted') this.game.settings.muted = t.checked;
       if (t.name === 'numbers') this.game.settings.showDamageNumbers = t.checked;
+      if (t.name === 'quality') {
+        this.game.settings.quality = t.checked ? 'low' : 'high';
+        this.game.applyQuality();
+      }
       this.game.saveSettings();
     });
   }
@@ -247,6 +251,7 @@ export class UI {
           <label>Volume <input type="range" name="volume" min="0" max="100" value="${Math.round(st.volume * 100)}" /></label>
           <label><input type="checkbox" name="muted" ${st.muted ? 'checked' : ''}/> Couper le son</label>
           <label><input type="checkbox" name="numbers" ${st.showDamageNumbers ? 'checked' : ''}/> Afficher les dégâts</label>
+          <label><input type="checkbox" name="quality" ${st.quality === 'low' ? 'checked' : ''}/> Mode performance (sans ombres)</label>
         </div>
         <details><summary>Commandes</summary>${this.helpHtml()}</details>
       </div>`;
